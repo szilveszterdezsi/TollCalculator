@@ -1,0 +1,63 @@
+﻿{
+  "dailyMaxFee": 60.0,
+  "windowDurationMinutes": 60.0,
+  "fees": [
+    {
+      "amount": 8.0,
+      "intervals": [
+        {
+          "startTime": "06:00",
+          "endTime": "06:30"
+        },
+        {
+          "startTime": "08:30",
+          "endTime": "15:00"
+        },
+        {
+          "startTime": "17:00",
+          "endTime": "18:00"
+        }
+      ]
+    },
+    {
+      "amount": 13.0,
+      "intervals": [
+        {
+          "startTime": "06:30",
+          "endTime": "07:00"
+        },
+        {
+          "startTime": "08:00",
+          "endTime": "08:30"
+        },
+        {
+          "startTime": "15:00",
+          "endTime": "15:30"
+        }
+      ]
+    },
+    {
+      "amount": 18.0,
+      "intervals": [
+        {
+          "startTime": "07:00",
+          "endTime": "08:00"
+        },
+        {
+          "startTime": "15:30",
+          "endTime": "17:00"
+        }
+      ]
+    }
+  ],
+  "exemptDaysOfTheWeek": [
+    0,
+    6
+  ],
+  "exemptVehicleTypes": [
+    4,
+    5,
+    7
+  ],
+  "validUntil":  "2030-01-01T00:00:00"
+}

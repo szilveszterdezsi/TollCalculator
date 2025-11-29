@@ -1,0 +1,221 @@
+﻿@page "/"
+@inject CalculationService calculatonService
+@inject RulesRepository rulesRepository
+
+<PageTitle>Toll Calculator</PageTitle>
+
+<div class="container my-5">
+    <h1 class="mb-3">Toll Calculator</h1>
+
+    <h2>Passages</h2>
+    <div class="row g-2 mb-2 align-items-center">
+        <div class="col-auto">
+            <label for="select" class="form-label">Vehicle Type:</label>
+            <select id="select" @bind="vehicleType" @bind:after="OnVehicleTypeChanged" class="form-select">
+                @foreach (VehicleType type in Enum.GetValues(typeof(VehicleType)))
+                {
+                    if (type.Equals(VehicleType.Unknown))
+                        continue;
+                    <option value="@(type)">@type.GetDescription()</option>
+                }
+            </select>
+        </div>
+    </div>
+    @for (int i = 0; i < dates.Count; i++)
+    {
+        var index = i;
+
+        <div class="row g-2 mb-2 align-items-center">
+
+            <div class="col-auto">
+                <input class="form-control"
+                       type="date"
+                       value="@dates[i].ToString("yyyy-MM-dd")"
+                       @onchange='(e) => UpdateDate(index, e.Value?.ToString() ?? DateTime.Now.ToString("yyyy-MM-dd"))' />
+            </div>
+
+            <div class="col-auto">
+                <input class="form-control"
+                       type="time"
+                       value="@dates[i].ToString("HH:mm")"
+                       @onchange='(e) => UpdateTime(index, e.Value?.ToString() ?? DateTime.Now.TimeOfDay.ToString("HH:mm"))' />
+            </div>
+
+            <div class="col-auto">
+                <button class="btn btn-danger" @onclick="() => RemoveDate(index)">Remove</button>
+            </div>
+        </div>
+    }
+    <div class="row g-2 mb-2 align-items-center">
+        <div class="col-auto">
+            <button class="btn btn-primary mb-3" @onclick="AddDate">Add New Passage</button>
+        </div>
+    </div>
+
+    @if (dailyReports != null && dailyReports.Any())
+    {
+        <h2>Reports</h2>
+        <div class="col mb-4">
+            <div class="row row-cols-3 fw-bold">
+                <div class="col-2">
+                    Date
+                </div>
+                <div class="col-2">
+                    Total
+                </div>
+                <div class="col-8">
+                    <div class="row row-cols-4">
+                        <div class="col-2">Time</div>
+                        <div class="col-2">Potential Fee</div>
+                        <div class="col-2">Charged Fee</div>
+                        <div class="col-6">Information</div>
+                    </div>
+                </div>
+            </div>
+            @foreach (var dailyReport in dailyReports)
+            {
+                <div class="row row-cols-3 border border-1">
+                    <div class="col-2">@dailyReport.Date.ToString("yyyy-MM-dd")</div>
+                    <div class="col-2">@dailyReport.TotalFee SEK</div>
+                    <div class="col-8">
+                        @foreach (var window in dailyReport.Windows)
+                        {
+                            <div class="row mb-1">
+                                @foreach (var passage in window)
+                                {
+                                    <div class="row row-cols-4 @GetPassageCssClass(passage.Type) ms-0">
+                                        <div class="col-2 px-0">@passage.Time</div>
+                                        <div class="col-2 px-1">@passage.PotentialFee SEK</div>
+                                        <div class="col-2 px-2">@passage.ChargedFee SEK</div>
+                                        <div class="col-6">@passage.Type.GetDescription()</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    <h2>Rules</h2>
+
+    @if (rules == null)
+    {
+        <p><em>Loading rules...</em></p>
+    }
+    else
+    {
+        <div class="col mb-2">
+            <ul>
+                <li>The maximum daily total fee is capped at <b>@rules.DailyMaxFee SEK</b> (partial fees may apply)</li>
+                <li>For multiple fees within the same <b> @rules.WindowDurationMinutes-minute</b> window, only the peak fee applies</li>
+                <li>Exempt vehile types: <b>@string.Join(", ", rules.ExemptVehicleTypes)</b></li>
+                <li>Exempt days of the week (weekends): <b>@string.Join(", ", rules.ExemptDaysOfTheWeek.OrderByDescending(d => d))</b></li>
+                <li>All public holidays are also exempt</li>
+            </ul>
+        </div>
+        <h3>Fees</h3>
+        <div class="col mb-2">
+            <div class="row row-cols-2 fw-bold">
+                <div class="col-2">Interval</div>
+                <div class="col-10">Amount</div>
+            </div>
+            @foreach (var interval in rules.Fees.SelectMany(f => f.Intervals.Select(i => new { i.StartTime, i.EndTime, f.Amount })).OrderBy(i => i.StartTime))
+            {
+                <div class="row row-cols-2 border border-1">
+                    <div class="col-2">@interval.StartTime.ToString() - @interval.EndTime.ToString()</div>
+                    <div class="col-10">@interval.Amount SEK</div>
+                </div>
+            }
+        </div>
+        <div class="col mb-2">
+            <p>Current rules and fees are valid until: @rules.ValidUntil.ToString("yyyy-MM-dd HH:mm")</p>
+        </div>
+    }
+
+    <h3>Holidays</h3>
+
+    @if (publicHolidays == null)
+    {
+        <p><em>Loading public holidays...</em></p>
+    }
+    else
+    {
+        <div class="col mb-2">
+            <div class="row row-cols-2 fw-bold">
+                <div class="col-2">Date</div>
+                <div class="col-10">Name</div>
+            </div>
+            @foreach (var holiday in publicHolidays.PublicHolidayNames(DateTime.Now.Year))
+            {
+                <div class="row border border-1">
+                    <div class="col-2">@holiday.Key.ToString("yyyy-MM-dd")</div>
+                    <div class="col-10">@holiday.Value</div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+@code {
+
+    private List<DateTime> dates = [];
+    private IEnumerable<DailyReport>? dailyReports;
+    private VehicleType vehicleType = VehicleType.Car;
+    private SwedenPublicHoliday publicHolidays = new();
+    private Rules? rules;
+
+    protected override async Task OnInitializedAsync()
+    {
+        rules = await rulesRepository.GetRulesAsync();
+        await GetDailyReports();
+    }
+
+    private async Task OnVehicleTypeChanged()
+    {
+        await GetDailyReports();
+    }
+
+    private async Task GetDailyReports()
+    {
+        dailyReports = await calculatonService.GetDailyReportsAsync(vehicleType, dates);
+    }
+
+    private void AddDate()
+    {
+        dates.Add(DateTime.Now);
+    }
+
+    private void RemoveDate(int index)
+    {
+        if (index >= 0 && index < dates.Count)
+        {
+            dates.RemoveAt(index);
+        }
+    }
+
+    private void UpdateDate(int index, string newDate)
+    {
+        if (DateTime.TryParse(newDate, out var d))
+        {
+            var old = dates[index];
+            dates[index] = new DateTime(d.Year, d.Month, d.Day, old.Hour, old.Minute, old.Second);
+        }
+    }
+
+    private void UpdateTime(int index, string newTime)
+    {
+        if (TimeSpan.TryParse(newTime, out var t))
+        {
+            var old = dates[index];
+            dates[index] = new DateTime(old.Year, old.Month, old.Day, t.Hours, t.Minutes, 0);
+        }
+    }
+
+    private static string GetPassageCssClass(PassageType type) => type switch
+    {
+        PassageType.Standard or PassageType.StandardWindowPeak => "bg-danger-subtle",
+        PassageType.ExemptionPartialDailyMax => "bg-warning-subtle",
+        _ => "bg-success-subtle"
+    };
+}
