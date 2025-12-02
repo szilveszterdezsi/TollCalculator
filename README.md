@@ -3,7 +3,7 @@ A web tool to calculate toll fees for one or more days, accounting for vehicle t
 
 ## Development Environment
 * **Microsoft Visual Studio 2026** IDE
-* **C# 12** (with .NET 10 SDK & Runtime)
+* **C# 14** (with .NET 10 SDK & Runtime)
 * **Blazor WebAssembly Standalone App** project template
 * **NUnit** unit testing framework
 
@@ -17,7 +17,7 @@ A web tool to calculate toll fees for one or more days, accounting for vehicle t
 ## Project Structure
 ```text
 TollCalculator
-├─ TollCalculator
+├─ TollCalculator/
 │  ├─ Enums/
 │  │  ├─ PassageType.cs            <- passage classification enum
 │  │  └─ VehicleType.cs            <- vehicle classification enum
@@ -39,7 +39,7 @@ TollCalculator
 │  ├─ Services/
 │  │  ├─ CalculationService.cs     <- calculation logic
 │  │  └─ RulesRepository.cs        <- fetches rules
-│  ├─ wwwroot
+│  ├─ wwwroot/
 │  │  ├─ css
 │  │  │  └─ app.css
 │  │  ├─ data
